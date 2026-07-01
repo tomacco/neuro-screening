@@ -38,34 +38,34 @@
     <div id="doc"><p class="loading">Cargando resultados…</p></div>
   </main>
 
-  <!-- Self-contained viewer: needs no test modules and no access key. The whole
-       result travels in the link (ciphertext in ?s=, decode key in the #fragment). -->
+  <!-- Access-gated viewer: the recipient unlocks with their own key, which decrypts
+       the test modules; the link itself carries only the compact answer data (?all=). -->
   <script src="assets/js/crypto.js"></script>
+  <script src="assets/js/share.js"></script>
   <script src="assets/js/blot.js"></script>
   <script src="assets/js/engine.js"></script>
+  <script src="assets/js/gate.js"></script>
   <script>
-    (function () {
+   NeuroGate.require(function () {
       var bm = document.querySelector('.brand .blot-mark');
       if (bm && window.NeuroBlot) bm.innerHTML = NeuroBlot.svg(1, { blur: 0.8 });
 
       var doc = document.getElementById('doc');
-      var s = new URLSearchParams(location.search).get('s');
-      var k = new URLSearchParams((location.hash || '').replace(/^#/, '')).get('k');
-      if (!s || !k) { doc.innerHTML = '<div class="disclaimer">Este enlace no contiene resultados. <a href="index.html">Volver al inicio</a>.</div>'; return; }
+      var enc = new URLSearchParams(location.search).get('all');
+      if (!enc) { doc.innerHTML = '<div class="disclaimer">Este enlace no contiene resultados. <a href="index.html">Volver al inicio</a>.</div>'; return; }
 
-      NeuroCrypto.openBundle(s, k).then(function (bundle) {
-        var res = NeuroEngine.renderSharedBundle(bundle, 'doc');
-        if (!res) return; // renderSharedBundle already printed an error
+      NeuroShare.decodeAsync(enc).then(function (model) {
+        if (!model) { doc.innerHTML = '<div class="disclaimer">No se pudo leer este enlace.</div>'; return; }
+        var res = NeuroEngine.renderShared(model, 'doc');
+        if (!res) return; // renderShared already printed an error
         var head = document.getElementById('share-head');
         var who = (res.meta.alias && res.meta.alias.trim()) || 'Sin nombre';
         document.getElementById('share-sub').textContent =
           who + ' · ' + res.count + ' test(s)' + (res.meta.fecha ? ' · ' + res.meta.fecha : '');
         head.hidden = false;
         document.getElementById('btn-print').addEventListener('click', function () { window.print(); });
-      }).catch(function () {
-        doc.innerHTML = '<div class="disclaimer">No se pudo leer este enlace (posiblemente incompleto o modificado).</div>';
       });
-    })();
+   });
   </script>
 </body>
 </html>

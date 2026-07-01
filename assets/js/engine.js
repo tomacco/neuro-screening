@@ -421,8 +421,7 @@
   };
 
   Runner.prototype.share = function () {
-    var meta = this.getMeta();
-    sealAndCopy({ v: 1, meta: meta, tests: [bundleTest(this.test, this.state, meta)] });
+    shareModelLink(buildOneModel(this.test, this.state, this.getMeta()));
   };
 
   Runner.prototype.reset = function () {
@@ -534,76 +533,21 @@
     return { meta: meta, tests: tests };
   }
 
-  /* --------- Self-contained share bundle (fully-rendered, no modules) -------- */
-  // A shared link must render on resultados.html WITHOUT the (gated) test modules
-  // and WITHOUT an access key. So the bundle carries the already-resolved strings
-  // for the chosen variant only — question text, the picked option, scores.
-  //   bundle = { v, meta, tests:[ { code, title, sub, instr, showValues,
-  //                                 sections:[{key,title}], items:[{n,sec,t,a,av}],
-  //                                 scores:[{name,value,max}] } ] }
-  function bundleTest(t, state, meta) {
-    var v = state.v || defaultVariant();
-    var items = t.items.map(function (it) {
-      var opt = t.scale.options.filter(function (o) { return o.value === state.a[it.n]; })[0];
-      return { n: it.n, sec: it.section || null, t: resolve(it.text, v), a: opt ? resolve(opt.label, v) : null, av: opt ? opt.value : null };
-    });
-    var scores = null;
-    if (t.score) {
-      try {
-        var r = t.score(state.a, { variant: v, meta: meta });
-        if (r && r.scores) scores = r.scores.map(function (s) { return { name: s.name, value: s.value, max: (s.max != null ? s.max : null) }; });
-      } catch (e) {}
-    }
-    return {
-      code: (t.code || t.id).toUpperCase(), title: resolve(t.title, v), sub: t.subtitle || '',
-      instr: resolve(t.instructions, v), showValues: !!t.scale.showValues,
-      sections: (t.sections || []).map(function (s) { return { key: s.key, title: resolve(s.title, v) }; }),
-      items: items, scores: scores
-    };
+  // Compact model for a single test (same shape parseAllModel expects).
+  function buildOneModel(test, state, meta) {
+    var digits = '';
+    test.items.forEach(function (it) { var v = state.a[it.n]; digits += (v != null) ? String(v) : '.'; });
+    var vi = VIDX[state.v]; if (vi == null) vi = 1;
+    var entries = Object.keys(state.a).length ? [[test.id, vi, digits]] : [];
+    return [COMBINED_FMT, [meta.alias || '', meta.edad || '', meta.fecha || ''], entries];
   }
 
-  // Render one bundle test into the same print-friendly DOM renderStaticTest emits.
-  function renderBundleTest(bt, meta) {
-    var wrap = el('div', { class: 'print-test' });
-    wrap.appendChild(el('div', { class: 'test-head' }, [
-      el('div', { class: 'kicker', text: bt.code }),
-      el('h1', { text: bt.title }),
-      el('p', { class: 'sub', text: bt.sub || '' })
-    ]));
-    function pf(label, val) {
-      return el('div', { class: 'pf' }, [
-        el('span', { class: 'pf-k', text: label }),
-        el('span', { class: 'pf-v', text: (val != null && val !== '') ? String(val) : '—' })
-      ]);
-    }
-    wrap.appendChild(el('div', { class: 'profile-bar' }, [
-      pf('Alias', meta.alias), pf('Edad', meta.edad), pf('Fecha', meta.fecha || '')
-    ]));
-    if (bt.instr) wrap.appendChild(el('div', { class: 'instructions', html: bt.instr }));
-    var secMap = {}; (bt.sections || []).forEach(function (s) { secMap[s.key] = s.title; });
-    var last = null;
-    bt.items.forEach(function (it) {
-      if (it.sec && it.sec !== last) { last = it.sec; wrap.appendChild(el('div', { class: 'section-title', text: secMap[it.sec] || it.sec })); }
-      var opts = el('div', { class: 'options' }, it.a != null ? [
-        el('label', { class: 'opt checked' }, [
-          el('span', { class: 'lbl', text: it.a }),
-          (bt.showValues ? el('span', { class: 'val', text: it.av }) : null)
-        ])
-      ] : []);
-      wrap.appendChild(el('div', { class: 'item' + (it.a != null ? '' : ' unanswered') }, [
-        el('div', { class: 'q' }, [el('span', { class: 'n', text: it.n + '.' }), el('span', { class: 't', html: it.t })]),
-        opts
-      ]));
-    });
-    if (bt.scores && bt.scores.length) wrap.appendChild(scoreBox({ scores: bt.scores }));
-    return wrap;
-  }
-
-  // Seal a bundle and copy the resultados.html link (ciphertext in ?s=, key in #k=).
-  function sealAndCopy(bundle) {
-    global.NeuroCrypto.sealBundle(bundle).then(function (res) {
+  // Encode a compact model and copy the (key-gated) resultados.html link.
+  function shareModelLink(model) {
+    if (!model[2].length) { alert('No hay respuestas que compartir.'); return; }
+    global.NeuroShare.encodeAsync(model).then(function (enc) {
       var dir = location.pathname.replace(/[^/]*$/, '');
-      var url = location.origin + dir + 'resultados.html?s=' + res.s + '#k=' + res.k;
+      var url = location.origin + dir + 'resultados.html?all=' + enc;
       var done = function () { toast('Enlace de resultados copiado (' + url.length + ' caracteres)'); };
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(url).then(done, function () { prompt('Copia el enlace:', url); });
@@ -669,30 +613,7 @@
     // Build a single compressed URL holding every answered test for the current
     // user, pointing at the read-only viewer (resultados.html).
     shareAllLink: function () {
-      var meta = NeuroUsers.current(), uid = NeuroUsers.currentId();
-      var tests = [];
-      NeuroTests.all().forEach(function (t) {
-        var st = NeuroUsers.testState(uid, t.id);
-        if (Object.keys(st.a).length) tests.push(bundleTest(t, st, meta));
-      });
-      if (!tests.length) { alert('No hay respuestas que compartir para este usuario.'); return; }
-      sealAndCopy({ v: 1, meta: meta, tests: tests });
-    },
-
-    // Render a self-contained share bundle into a read-only results page.
-    // Needs neither the test modules nor an access key. Never touches localStorage.
-    renderSharedBundle: function (bundle, rootId) {
-      var root = document.getElementById(rootId);
-      if (!bundle || !bundle.tests || !bundle.tests.length) {
-        root.innerHTML = '<div class="disclaimer">No se pudieron leer los resultados de este enlace.</div>';
-        return false;
-      }
-      root.innerHTML = '';
-      var meta = bundle.meta || {};
-      var doc = el('div', { class: 'results-doc' });
-      bundle.tests.forEach(function (bt) { doc.appendChild(renderBundleTest(bt, meta)); });
-      root.appendChild(doc);
-      return { meta: meta, count: bundle.tests.length };
+      shareModelLink(buildAllModel());
     },
 
     // Render a decoded combined model into a read-only results page.

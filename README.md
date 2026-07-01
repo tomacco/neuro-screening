@@ -25,9 +25,10 @@ keeps the instrument text out of the public repository as plaintext. See **NOTIC
 - One generic runner (`test.html?t=<id>`) driven by per-test data modules.
 - **Three language variants** per item, switchable live: `Original` (verbatim), `LatAm`, `España`.
 - Autosave to `localStorage`, per user (multiple profiles on one device).
-- **Share by link (keyless):** a shared result is fully self-contained — ciphertext in `?s=`, decode
-  key in the URL `#fragment` (never sent to a server). The recipient needs **no** access key; they see
-  only that one result, rendered read-only on `resultados.html`.
+- **Share by link:** a shared result is a compact link (`?all=`, deflate+base64url, ~150–250 chars).
+  The recipient unlocks with **their own** access key — which decrypts the modules and reconstructs the
+  question text — then sees the result read-only on `resultados.html`. Sharing stays inside the keyed
+  circle; nothing is viewable without a key.
 - **Export to PDF** via the browser print dialog.
 - **Interpretation** (cutoff bands) behind an optional toggle — *never* included in the PDF.
 
@@ -50,7 +51,7 @@ requires a secure context — `127.0.0.1`/`localhost` and HTTPS both qualify.
 ## Structure
 ```
 index.html / test.html      access-gated landing + generic runner
-resultados.html             keyless, self-contained shared-results viewer
+resultados.html             access-gated shared-results viewer (compact ?all= link)
 assets/js/crypto.js         WebCrypto helpers (interop with the admin build)
 assets/js/gate.js           lock screen + unlock + encrypted-module loader
 assets/js/engine.js         registry, runner, share-bundle builder/renderer
