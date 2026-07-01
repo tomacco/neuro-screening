@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Neuro-Screening mark: symmetric Rorschach inkblot (variant A) on a paper tile. -->
+  <defs>
+    <filter id="wet" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1.5"/>
+    </filter>
+    <linearGradient id="ink" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c25c35"/>
+      <stop offset="1" stop-color="#9c4526"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="44" fill="#f3ece0"/>
+  <g fill="url(#ink)" filter="url(#wet)">
+    <!-- centre spine (on the mirror axis) -->
+    <ellipse cx="100" cy="104" rx="22" ry="64"/>
+    <ellipse cx="100" cy="52" rx="30" ry="22"/>
+    <!-- right half -->
+    <g id="half">
+      <ellipse cx="135" cy="96" rx="38" ry="52"/>
+      <circle cx="158" cy="66" r="20"/>
+      <circle cx="150" cy="132" r="18"/>
+      <ellipse cx="118" cy="160" rx="16" ry="26"/>
+      <circle cx="171" cy="102" r="10"/>
+    </g>
+    <!-- mirrored left half -->
+    <g transform="translate(200,0) scale(-1,1)">
+      <ellipse cx="135" cy="96" rx="38" ry="52"/>
+      <circle cx="158" cy="66" r="20"/>
+      <circle cx="150" cy="132" r="18"/>
+      <ellipse cx="118" cy="160" rx="16" ry="26"/>
+      <circle cx="171" cy="102" r="10"/>
+    </g>
+  </g>
+</svg>
