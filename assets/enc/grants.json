@@ -1,0 +1,47 @@
+{
+  "v": 1,
+  "kdf": {
+    "name": "PBKDF2",
+    "hash": "SHA-256",
+    "iters": 150000,
+    "saltB64": "htV64Usiq9a8WjfwkRZPPw"
+  },
+  "wraps": [
+    {
+      "id": "ivan",
+      "ctB64": "H7T-IIizhqVLGK3lwVidElPLeuNbwz7lUEWP59my4Q7wdby1IZV8bG1AwQNcpppn7c8UeyEwtu-HA0Bc"
+    },
+    {
+      "id": "matias",
+      "ctB64": "t61laur2XVmq1WcADEVsqO8fwewXlNkV3BBjFDU5LiFn2G0y-sMeB8foHP7U7PFG6Oq42KwDVko_BYp8"
+    },
+    {
+      "id": "meritxell",
+      "ctB64": "gp3VM93MXqcKFAI7bSetLgN10oInh6ZxKSWlx2ySTDMY3d4tPZgt0Q-CAs_qOz9oNEva6Foo3UTyah-p"
+    },
+    {
+      "id": "bluefox",
+      "ctB64": "kzCE0hwCsVDrbGrDVpvAAYw6hyTMbA-WQp2N8MLzKHDgH0X6C4SpYHnMYaJQyGwVYG7X0fE4kJfZa--H"
+    },
+    {
+      "id": "happyplush",
+      "ctB64": "FzxXCizksuYmUOIUEjCUV_c3fO5wyh3OFxtQyK6_nvfN3skbuqaT_5kw_GBxfWT6GGDivQmdX8VzTo0Z"
+    },
+    {
+      "id": "silvermoth",
+      "ctB64": "Hza4lqD4p35YPmp3h2_UZiT3tz-d1OzxAGZS9VVrPvgg74dbqxlgOCCMya3x1sevQEw5pWVbtNKInT0x"
+    },
+    {
+      "id": "tidepine",
+      "ctB64": "gaEuGlV83QzDUMqTAyx6v8JwcxFnclfFO0hD_De8GB3glvMluEticZXB6ND7gVM8iT-pZmWZTLe-W3_M"
+    },
+    {
+      "id": "emberfinch",
+      "ctB64": "21Rg40afH3Abe884K1oybvyixsaAy395MeQcJGIrb-80FgO6zBPVGfRzTXmUQa_dmGEu1Y7n1NSzylN9"
+    },
+    {
+      "id": "plumcanyon",
+      "ctB64": "2CjOfNq4_o4s_Gt7v1YFAcHqz64P86DSk0Begek72uKdwrfvcU6oq4F-oiQuypw9hTgO8Y9iAhZtSxYm"
+    }
+  ]
+}

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Neuro-Screening — Cuestionarios</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=2">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="index.html"><span class="blot-mark"></span><span><b>Neuro-Screening</b><small>Cuestionarios</small></span></a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <span class="blot-deco" aria-hidden="true"></span>
+      <h1>Cuestionarios</h1>
+      <p class="lede">Versiones digitales de varios cuestionarios de cribado, pensadas para rellenar cómodamente
+        en ordenador, tablet o iPad.</p>
+    </section>
+
+    <div class="disclaimer">
+      <strong>Privacidad ante todo:</strong> esta web no tiene servidor ni cuentas. <strong>No se guarda ni se
+      envía ningún dato personal.</strong> Tus respuestas se guardan únicamente en este dispositivo y solo se
+      comparten si tú generas y envías un enlace. Estos cuestionarios son herramientas de cribado y
+      <strong>no constituyen un diagnóstico</strong>.
+    </div>
+
+    <section id="datos" class="datos-card">
+      <h2>Usuarios</h2>
+      <p class="datos-note">Cada usuario guarda sus propias respuestas en este dispositivo. Cambia de usuario
+        para rellenar los cuestionarios con otro perfil. No se envía nada a ningún sitio.</p>
+      <div class="user-bar">
+        <label for="user-select">Usuario activo</label>
+        <select id="user-select"></select>
+        <button type="button" class="btn-sm" id="user-add">+ Añadir</button>
+        <button type="button" class="btn-sm danger" id="user-del">Eliminar</button>
+      </div>
+      <div class="meta-fields" id="profile-fields"></div>
+    </section>
+
+    <div class="landing-actions">
+      <button type="button" class="btn primary" id="btn-print-all">Exportar todos los tests completados a PDF</button>
+      <button type="button" class="btn" id="btn-share-all">Compartir todos los resultados (enlace)</button>
+      <button type="button" class="btn ghost" id="btn-lock" title="Olvidar la clave en este dispositivo">Cerrar acceso</button>
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <footer class="foot">Uso personal y educativo · Sin servidor · Sin sesiones · Sin datos personales</footer>
+  </main>
+
+  <div id="print-all"></div>
+
+  <script src="assets/js/crypto.js"></script>
+  <script src="assets/js/blot.js"></script>
+  <script src="assets/js/engine.js"></script>
+  <script src="assets/js/gate.js"></script>
+  <script>
+   NeuroGate.require(function () {
+    (function () {
+      var sel = document.getElementById('user-select');
+      var pf = document.getElementById('profile-fields');
+      var grid = document.getElementById('grid');
+
+      // --- User switcher ---
+      function userLabel(u) { return (u.alias && u.alias.trim()) || 'Sin nombre'; }
+
+      function renderUserSelect() {
+        sel.innerHTML = '';
+        var cur = NeuroUsers.currentId();
+        NeuroUsers.all().forEach(function (u) {
+          var o = document.createElement('option');
+          o.value = u.id; o.textContent = userLabel(u);
+          if (u.id === cur) o.selected = true;
+          sel.appendChild(o);
+        });
+      }
+
+      // --- Profile fields for the active user ---
+      function renderFields() {
+        pf.innerHTML = '';
+        var user = NeuroUsers.current();
+        NeuroUsers.fields.forEach(function (f) {
+          var wrap = document.createElement('div'); wrap.className = 'field';
+          var lab = document.createElement('label'); lab.textContent = f.label; lab.setAttribute('for', 'pf-' + f.key);
+          var inp = document.createElement('input');
+          inp.id = 'pf-' + f.key; inp.type = f.type || 'text'; inp.placeholder = f.ph || '';
+          inp.value = user[f.key] || '';
+          inp.addEventListener('input', function () {
+            var patch = {}; patch[f.key] = inp.value;
+            NeuroUsers.update(NeuroUsers.currentId(), patch);
+            if (f.key === 'alias') {
+              var opt = sel.querySelector('option[value="' + NeuroUsers.currentId() + '"]');
+              if (opt) opt.textContent = userLabel(NeuroUsers.current());
+            }
+          });
+          wrap.appendChild(lab); wrap.appendChild(inp); pf.appendChild(wrap);
+        });
+      }
+
+      // --- Test cards (with per-user completion status) ---
+      function txt(f) { return (f && (f.latam || f.verbatim || f.es)) || f || ''; }
+      function renderCards() {
+        grid.innerHTML = '';
+        var uid = NeuroUsers.currentId();
+        var tests = NeuroTests.all();
+        tests.forEach(function (t, i) {
+          var state = NeuroUsers.testState(uid, t.id);
+          var done = Object.keys(state.a).length, total = t.items.length;
+          var cls = done === 0 ? 'none' : (done < total ? 'partial' : 'done');
+          var label = done === 0 ? 'Sin empezar' : (done < total ? (done + '/' + total + ' respondidas') : '✓ Completado');
+
+          var a = document.createElement('a');
+          a.className = 'card';
+          a.href = 'test.html?t=' + t.id;
+          if (t.color) a.style.setProperty('--ink-accent', t.color);
+          var est = NeuroUtil.estMinutes(t.items.length);
+          var tags = '<span class="tag">' + t.items.length + ' ítems</span>' +
+                     '<span class="tag">≈ ' + est + ' min</span>';
+          if (t.copyrighted) tags += '<span class="tag copyright">Con copyright</span>';
+          a.innerHTML =
+            '<span class="blot-deco" aria-hidden="true">' + NeuroBlot.svg(i) + '</span>' +
+            '<div class="idx">' + ('0' + (i + 1)).slice(-2) + ' · ' + (t.code || t.id).toUpperCase() + '</div>' +
+            '<h3>' + txt(t.title) + '</h3>' +
+            '<div class="meta">' + (t.summary || '') + '</div>' +
+            '<div class="card-status ' + cls + '">' + label + '</div>' +
+            '<div class="tags">' + tags + '</div>';
+          grid.appendChild(a);
+        });
+        if (!tests.length) grid.innerHTML = '<p>Aún no hay cuestionarios cargados.</p>';
+      }
+
+      function refreshAll() { renderUserSelect(); renderFields(); renderCards(); }
+
+      sel.addEventListener('change', function () { NeuroUsers.setCurrent(sel.value); renderFields(); renderCards(); });
+      document.getElementById('user-add').addEventListener('click', function () {
+        NeuroUsers.add({}); refreshAll();
+        var first = pf.querySelector('input'); if (first) first.focus();
+      });
+      document.getElementById('user-del').addEventListener('click', function () {
+        var u = NeuroUsers.current();
+        if (!confirm('¿Eliminar el usuario «' + userLabel(u) + '» y todas sus respuestas en este dispositivo?')) return;
+        NeuroUsers.remove(NeuroUsers.currentId()); refreshAll();
+      });
+      document.getElementById('btn-print-all').addEventListener('click', function () { NeuroEngine.printAllCompleted(); });
+      document.getElementById('btn-share-all').addEventListener('click', function () { NeuroEngine.shareAllLink(); });
+
+      refreshAll();
+
+      // --- Brand + hero inkblots ---
+      var bm = document.querySelector('.brand .blot-mark');
+      if (bm) bm.innerHTML = NeuroBlot.svg(1, { blur: 0.8 });
+      var hero = document.querySelector('.hero .blot-deco');
+      if (hero) hero.innerHTML = NeuroBlot.svg(0);
+
+      var lock = document.getElementById('btn-lock');
+      if (lock) lock.addEventListener('click', function () {
+        if (confirm('¿Cerrar el acceso en este dispositivo? Tendrás que volver a introducir tu clave.')) NeuroGate.lock();
+      });
+    })();
+   });
+  </script>
+</body>
+</html>

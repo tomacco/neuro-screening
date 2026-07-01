@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <title>Resultados compartidos — Neuro-Screening</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=2">
+</head>
+<body>
+  <header class="topbar no-print">
+    <div class="wrap">
+      <a class="brand" href="index.html"><span class="blot-mark"></span><span><b>Neuro-Screening</b><small>Cuestionarios</small></span></a>
+      <span class="spacer"></span>
+      <a class="backlink" href="index.html">‹ Todos los tests</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="disclaimer no-print">
+      <strong>Resultados compartidos:</strong> esta página solo muestra los datos incluidos en el enlace.
+      No se guarda ni se envía nada, y tus propios cuestionarios en este dispositivo no se modifican.
+      Esto <strong>no es un diagnóstico</strong>.
+    </div>
+
+    <div class="share-head no-print" id="share-head" hidden>
+      <h1>Resultados compartidos</h1>
+      <p class="sub" id="share-sub"></p>
+      <div class="landing-actions">
+        <button type="button" class="btn primary" id="btn-print">Exportar a PDF</button>
+      </div>
+    </div>
+
+    <div id="doc"><p class="loading">Cargando resultados…</p></div>
+  </main>
+
+  <!-- Self-contained viewer: needs no test modules and no access key. The whole
+       result travels in the link (ciphertext in ?s=, decode key in the #fragment). -->
+  <script src="assets/js/crypto.js"></script>
+  <script src="assets/js/blot.js"></script>
+  <script src="assets/js/engine.js"></script>
+  <script>
+    (function () {
+      var bm = document.querySelector('.brand .blot-mark');
+      if (bm && window.NeuroBlot) bm.innerHTML = NeuroBlot.svg(1, { blur: 0.8 });
+
+      var doc = document.getElementById('doc');
+      var s = new URLSearchParams(location.search).get('s');
+      var k = new URLSearchParams((location.hash || '').replace(/^#/, '')).get('k');
+      if (!s || !k) { doc.innerHTML = '<div class="disclaimer">Este enlace no contiene resultados. <a href="index.html">Volver al inicio</a>.</div>'; return; }
+
+      NeuroCrypto.openBundle(s, k).then(function (bundle) {
+        var res = NeuroEngine.renderSharedBundle(bundle, 'doc');
+        if (!res) return; // renderSharedBundle already printed an error
+        var head = document.getElementById('share-head');
+        var who = (res.meta.alias && res.meta.alias.trim()) || 'Sin nombre';
+        document.getElementById('share-sub').textContent =
+          who + ' · ' + res.count + ' test(s)' + (res.meta.fecha ? ' · ' + res.meta.fecha : '');
+        head.hidden = false;
+        document.getElementById('btn-print').addEventListener('click', function () { window.print(); });
+      }).catch(function () {
+        doc.innerHTML = '<div class="disclaimer">No se pudo leer este enlace (posiblemente incompleto o modificado).</div>';
+      });
+    })();
+  </script>
+</body>
+</html>

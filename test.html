@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <title>Test — Neuro-Screening</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=2">
+</head>
+<body>
+  <header class="topbar no-print">
+    <div class="wrap">
+      <a class="brand" href="index.html"><span class="blot-mark"></span><span><b>Neuro-Screening</b><small>Cuestionarios</small></span></a>
+      <span class="spacer"></span>
+      <a class="backlink" href="index.html">‹ Todos los tests</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="disclaimer no-print">
+      <strong>Privacidad:</strong> nada se envía ni se guarda en ningún servidor. Tus respuestas viven solo
+      en este dispositivo (y en el enlace que tú decidas compartir). No se recogen datos personales.
+      Esto <strong>no es un diagnóstico</strong>.
+    </div>
+    <div id="app"></div>
+    <footer class="foot">Solo para uso personal y educativo. Comenta cualquier resultado con un profesional cualificado.</footer>
+  </main>
+
+  <!-- core -->
+  <script src="assets/js/crypto.js"></script>
+  <script src="assets/js/blot.js"></script>
+  <script src="assets/js/engine.js"></script>
+  <script src="assets/js/gate.js"></script>
+  <script>
+    NeuroGate.require(function () {
+      NeuroEngine.start('app');
+      var bm = document.querySelector('.brand .blot-mark');
+      if (bm && window.NeuroBlot) bm.innerHTML = NeuroBlot.svg(1, { blur: 0.8 });
+    });
+  </script>
+</body>
+</html>
